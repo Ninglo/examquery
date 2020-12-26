@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head></head>
+
+<body>
+    <div class="query">
+        <input id="question" />
+        <button onclick="query()">Query</button>
+    </div>
+    <div id="result">
+    </div>
+    <script>
+        async function query()
+        {
+            const questionInputElement = document.querySelector('#question')
+            const question = questionInputElement.value
+            try {
+                const data = await myAjax({
+                    url: '/api',
+                    data: {
+                        question
+                    },
+                    timeout: 10000
+                })
+                const JSONdata = JSON.parse(data)
+                const resultDiv = document.createElement('div')
+                console.log(JSONdata)
+                window.sbbb = JSONdata
+                for (const key in JSONdata) {
+                    if (!key) continue
+                    const element = document.createElement('div')
+                    element.innerHTML = JSONdata[key]
+                    resultDiv.appendChild(element)
+                }
+                const resultElement = document.querySelector('#result')
+                resultElement.appendChild(resultDiv)
+            } catch (error) {
+                console.log(error)
+            }
+        }
+
+        function myAjax({ method = 'get', url, async = true, data, timeout })
+        {
+            const httpRequest = new XMLHttpRequest()
+            httpRequest.timeout = timeout
+
+            return new Promise((resolve, reject) =>
+            {
+                httpRequest.ontimeout = () => reject && reject('timeout')
+                httpRequest.onerror = err => reject && reject(err)
+                httpRequest.onreadystatechange = () =>
+                {
+                    if (httpRequest.readyState === 4) {
+                        if (200 <= httpRequest.status < 300 || httpRequest.httpRequest.status === 304) {
+                            resolve && resolve(httpRequest.responseText)
+                        } else {
+                            reject && reject(httpRequest.status)
+                        }
+                    }
+                }
+
+                if (method === 'get') {
+                    let paramArr = []
+                    let encodeData = ''
+                    if (url.indexOf('?') === -1) {
+                        url += '?'
+                    } else if (url.indexOf('?') !== url.length - 1) {
+                        url += '&'
+                    }
+
+                    if (data instanceof Object) {
+                        for (let key in data) {
+                            paramArr.push(`${key}=${data[key]}`)
+                        }
+                        encodeData = paramArr.join('&')
+                    }
+                    url += encodeData
+
+                    httpRequest.open(method, url, async)
+                    httpRequest.send(null)
+                } else {
+                    httpRequest.open(method, url, async)
+                    httpRequest.setRequestHeader('name', 'value')
+                    httpRequest.send(data)
+                }
+            })
+        }
+    </script>
+</body>
+
+</html>
